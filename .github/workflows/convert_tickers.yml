@@ -1,0 +1,40 @@
+name: Convert Raw Stocks to TW/TWO
+
+on:
+  # 當您上傳或修改 raw_stocks.csv 時自動觸發轉換
+  push:
+    paths:
+      - 'raw_stocks.csv'
+  # 允許在 GitHub Actions 頁面手動點擊按鈕執行
+  workflow_dispatch:
+
+permissions:
+  contents: write  # 賦予寫入權限以儲存轉換後的 stock_list.csv
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. 檢出 Repository 程式碼
+        uses: actions/checkout@v4
+
+      - name: 2. 設定 Python 環境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 3. 安裝所需套件
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 4. 執行代號轉換腳本
+        run: python convert_tickers.py
+
+      - name: 5. 將轉換後的 stock_list.csv 存回 GitHub
+        run: |
+          git config --local user.email "github-actions[bot]@://github.com"
+          git config --local user.name "github-actions[bot]"
+          git add stock_list.csv
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto convert stock tickers to .TW/.TWO" && git push)
